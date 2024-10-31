@@ -177,7 +177,7 @@ func precedence(op string) int {
 }
 
 func main() {
-	
-	comment := "1 And 1 Or ( 0 Or 0) And ( 1 And not 0 )"
+
+	comment := "1 And 1 Or ( 0 Or 0 ) And ( 1 And not 0 )"
 	fmt.Println(StrintToBool(LogicOper(comment)))
 }
