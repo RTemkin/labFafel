@@ -74,11 +74,31 @@ func ApplyOperator(a, b, operator string) string {
 func LogicOper(comment string) string {
 	tokens := strings.Fields(comment)
 	values := []string{}
-	operators := []string{}
+	//operators := []string{}
+	stack := []string{}
 
 	for _, token := range tokens {
-		if token == "1" || token == "0" {
-			values = append(values, token)
+		if token == "(" {
+			// Начало подвыражения, добавляем в стек
+			stack = append(stack, token)
+		} else if token == ")" {
+			// Конец подвыражения, разрешаем стек
+			for len(stack) > 0 && stack[len(stack)-1] != "(" {
+				operator := stack[len(stack)-1]
+				stack = stack[:len(stack)-1]
+				if len(values) < 2 {
+					return "неправильное выражение" // Ошибка при недостатке значений
+				}
+				valB := values[len(values)-1]
+				valA := values[len(values)-2]
+				values = values[:len(values)-2] // Удаляем два последних значения
+				result := ApplyOperator(valA, valB, operator)
+				values = append(values, result) // Добавляем результат обратно
+			}
+			if len(stack) == 0 {
+				return "неправильное выражение" // Закрывающая скобка без открывающей
+			}
+			stack = stack[:len(stack)-1] // Удаляем '('
 		} else if token == "not" {
 			// Обработка операции NOT
 			if len(values) > 0 {
@@ -87,25 +107,41 @@ func LogicOper(comment string) string {
 				if err != nil {
 					return err.Error()
 				}
-				values = values[:len(values)-1]               // Удаляем последнее значение
-				values = append(values, boolToString(result)) // Добавляем результат
+				values[len(values)-1] = boolToString(result) // Заменяем на результат
 			}
-		} else {
-			operators = append(operators, token)
+		} else if token == "And" || token == "Or" || token == "Impl" || token == "Equi" {
+			// Обработка операторов
+			for len(stack) > 0 && precedence(stack[len(stack)-1]) >= precedence(token) {
+				operator := stack[len(stack)-1]
+				stack = stack[:len(stack)-1]
+				if len(values) < 2 {
+					return "неправильное выражение" // Ошибка при недостатке значений
+				}
+				valB := values[len(values)-1]
+				valA := values[len(values)-2]
+				values = values[:len(values)-2] // Удаляем два последних значения
+				result := ApplyOperator(valA, valB, operator)
+				values = append(values, result) // Добавляем результат обратно
+			}
+			stack = append(stack, token) // Добавляем оператор в стек
+		} else if token == "1" || token == "0" {
+			// Добавляем значения в массив
+			values = append(values, token)
 		}
 	}
 
-	// Применение операторов к значениям
-	for i := 0; i < len(operators); i++ {
-		operator := operators[i]
-		if i < len(values)-1 {
-			valA := values[i]
-			valB := values[i+1]
-			result := ApplyOperator(valA, valB, operator)
-			values[i] = result                             // Записываем результат на место операндов
-			values = append(values[:i+1], values[i+2:]...) // Удаляем второй операнд
-			i--                                            // Приводим i в соответствие с изменённым массивом
+	// Обработка оставшихся операторов в стеке
+	for len(stack) > 0 {
+		operator := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		if len(values) < 2 {
+			return "неправильное выражение" // Ошибка при недостатке значений
 		}
+		valB := values[len(values)-1]
+		valA := values[len(values)-2]
+		values = values[:len(values)-2] // Удаляем два последних значения
+		result := ApplyOperator(valA, valB, operator)
+		values = append(values, result) // Добавляем результат обратно
 	}
 
 	if len(values) > 0 {
@@ -114,7 +150,22 @@ func LogicOper(comment string) string {
 	return "нет значений"
 }
 
+// Определение приоритета операторов
+func precedence(op string) int {
+	switch op {
+	case "not":
+		return 3
+	case "And":
+		return 2
+	case "Or":
+		return 1
+	case "Impl", "Equi":
+		return 0
+	}
+	return -1
+}
+
 func main() {
-	comment := "1 And 1 Or 1 And 0 not"
+	comment := "1 And 0 Or ( 0 And not 0 ) "
 	fmt.Println(LogicOper(comment))
 }
