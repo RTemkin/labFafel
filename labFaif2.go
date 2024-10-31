@@ -56,6 +56,17 @@ func boolToString(val bool) string {
 	return "0"
 }
 
+func StrintToBool(val string) (bool, error) {
+	if val == "1" {
+		return true, nil
+	} else if val == "0" {
+		return false, nil
+	} else {
+		err := errors.New("нет данных")
+		return false, err
+	}
+}
+
 func ApplyOperator(a, b, operator string) string {
 	switch operator {
 	case "And":
@@ -166,6 +177,7 @@ func precedence(op string) int {
 }
 
 func main() {
-	comment := "1 And 0 Or ( 0 And not 0 ) "
-	fmt.Println(LogicOper(comment))
+	
+	comment := "1 And 1 Or ( 0 Or 0) And ( 1 And not 0 )"
+	fmt.Println(StrintToBool(LogicOper(comment)))
 }
