@@ -85,7 +85,6 @@ func ApplyOperator(a, b, operator string) string {
 func LogicOper(comment string) string {
 	tokens := strings.Fields(comment)
 	values := []string{}
-	//operators := []string{}
 	stack := []string{}
 
 	for _, token := range tokens {
